@@ -130,3 +130,11 @@
 2025-04-02 01:43:19,229 - INFO - Scanner initialized on host 192.168.0.102
 2025-04-02 01:43:20,231 - INFO - Starting UDP sender for subnet 192.168.0.0/24
 2025-04-02 01:43:20,246 - INFO - Host Up: 192.168.0.1
+2025-04-02 01:59:15,253 - INFO - Starting scanner on host 192.168.0.102 for subnet 192.168.0.0/24
+2025-04-02 01:59:15,254 - INFO - Scanner initialized on host 192.168.0.102
+2025-04-02 01:59:16,255 - INFO - Starting UDP sender for subnet 192.168.0.0/24
+2025-04-02 01:59:16,259 - INFO - Host Up: 192.168.0.1
+2025-04-02 02:20:01,179 - INFO - Starting scanner on host 192.168.0.102 for subnet 192.168.0.0/24
+2025-04-02 02:20:01,179 - INFO - Scanner initialized on host 192.168.0.102
+2025-04-02 02:20:02,180 - INFO - Starting UDP sender for subnet 192.168.0.0/24
+2025-04-02 02:20:02,499 - INFO - Host Up: 192.168.0.1

@@ -53,10 +53,24 @@ class ICMP:
 
 def udp_sender(subnet):
     logging.info(f'Starting UDP sender for subnet {subnet}')
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sender:
+    try:
+        sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sender.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
         for ip in ipaddress.ip_network(subnet).hosts():
-            sender.sendto(bytes(MESSAGE, 'utf8'), (str(ip), 64212))
-            logging.debug(f'Sent message to {ip}')
+            try:
+                sender.sendto(bytes(MESSAGE, 'utf8'), (str(ip), 64212))
+                logging.debug(f'Sent message to {ip}')
+                time.sleep(0.01)  # Небольшая задержка
+            except Exception as e:
+                logging.warning(f"Failed to send to {ip}: {e}")
+                continue
+
+    except Exception as e:
+        logging.error(f"UDP sender error: {e}")
+    finally:
+        sender.close()
+
 
 
 class Scanner:
