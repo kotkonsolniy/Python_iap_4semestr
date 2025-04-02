@@ -1,4 +1,3 @@
-# scanner.py
 import ipaddress
 import sys
 import socket
