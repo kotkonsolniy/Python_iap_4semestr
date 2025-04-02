@@ -1,3 +1,4 @@
+# sniffer.py
 import ipaddress
 import sys
 import socket
@@ -8,10 +9,12 @@ import time
 from utils import setup_logging, parse_arguments
 import logging
 
-# Волшебная строка, которую мы будем искать в ICMP ответах
+# Константы
 MESSAGE = 'BMSTU'
+UDP_PORT = 64212
+SOCKET_TIMEOUT = 2  # seconds
 
-#разбираем ip заголовк пакета,  распаковывает бинарные адреса
+
 class IP:
     def __init__(self, buff=None):
         header = struct.unpack("<BBHHHBBH4s4s", buff)
@@ -27,11 +30,9 @@ class IP:
         self.src = header[8]
         self.dst = header[9]
 
-        # IP-адреса, понятные человеку
         self.src_address = ipaddress.ip_address(self.src)
         self.dst_address = ipaddress.ip_address(self.dst)
 
-        # Сопоставляем константы протоколов с их названиями
         self.protocol_map = {1: "ICMP", 6: "TCP", 17: "UDP"}
         try:
             self.protocol = self.protocol_map[self.protocol_num]
@@ -39,7 +40,7 @@ class IP:
             logging.error(f'{e} No protocol for {self.protocol_num}')
             self.protocol = str(self.protocol_num)
 
-#разбирает ICMP заголовок
+
 class ICMP:
     def __init__(self, buff=None):
         header = struct.unpack("<BBHHH", buff)
@@ -49,94 +50,98 @@ class ICMP:
         self.id = header[3]
         self.seq = header[4]
 
-#создает udp сокет с широковещательной рассылкой
 
-#изначальная функция не совсем корректна, тесты сразу же падали при недоступном хосте
 def udp_sender(subnet):
+    """Отправка UDP-пакетов на все хосты в подсети"""
     logging.info(f'Starting UDP sender for subnet {subnet}')
+    sender = None
     try:
         sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sender.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1) #разрешение широковещательной рассылки
+        sender.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        sender.settimeout(SOCKET_TIMEOUT)
 
         for ip in ipaddress.ip_network(subnet).hosts():
             try:
-                sender.sendto(bytes(MESSAGE, 'utf8'), (str(ip), 64212))
+                sender.sendto(bytes(MESSAGE, 'utf8'), (str(ip), UDP_PORT))
                 logging.debug(f'Sent message to {ip}')
-                time.sleep(0.01)  # небольшая задержка после каждой отправки
-                #отсуствие задержки могло вызывать переполнение буффера
-                #ошибки не прерываются а только логируются
-            except Exception as e:
+                time.sleep(0.01)  # Задержка для избежания перегрузки
+            except socket.error as e:
                 logging.warning(f"Failed to send to {ip}: {e}")
                 continue
-
     except Exception as e:
         logging.error(f"UDP sender error: {e}")
     finally:
-        sender.close()
+        if sender:
+            sender.close()
 
 
-#настраивает сокет для захвата пакетов
 class Scanner:
     def __init__(self, host):
         self.host = host
-        if os.name == 'nt':
-            socket_protocol = socket.IPPROTO_IP
-        else:
-            socket_protocol = socket.IPPROTO_ICMP
+        socket_protocol = socket.IPPROTO_IP if os.name == 'nt' else socket.IPPROTO_ICMP
 
-        self.socket = socket.socket(
-            socket.AF_INET, socket.SOCK_RAW, socket_protocol
-        )
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket_protocol)
         self.socket.bind((host, 0))
         self.socket.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
+
         if os.name == 'nt':
             self.socket.ioctl(socket.SIO_RCVALL, socket.RCVALL_ON)
+
         logging.info(f'Scanner initialized on host {host}')
 
-#захватывает сырые пакет, разюивает ip заголовки, добавляет хост в список в случае выполнения всех условий
     def sniff(self, subnet):
+        """Основной цикл сканирования сети"""
         hosts_up = set()
         try:
             while True:
                 raw_buffer = self.socket.recvfrom(65535)[0]
                 ip_header = IP(raw_buffer[0:20])
+
                 if ip_header.protocol == "ICMP":
                     offset = ip_header.ihl * 4
                     buf = raw_buffer[offset:offset + 8]
                     icmp_header = ICMP(buf)
-                    if icmp_header.code == 3 and icmp_header.type == 3:
-                        if ipaddress.ip_address(ip_header.src_address) in ipaddress.IPv4Network(subnet):
-                            if raw_buffer[len(raw_buffer) - len(MESSAGE):] == bytes(MESSAGE, 'utf8'):
-                                tgt = str(ip_header.src_address)
-                                if tgt != self.host and tgt not in hosts_up:
-                                    hosts_up.add(str(ip_header.src_address))
-                                    logging.info(f'Host Up: {tgt}')
-                                    print(f'Host Up: {tgt}')
+
+                    if (icmp_header.code == 3 and icmp_header.type == 3 and
+                            ipaddress.ip_address(ip_header.src_address) in ipaddress.IPv4Network(subnet) and
+                            raw_buffer[len(raw_buffer) - len(MESSAGE):] == bytes(MESSAGE, 'utf8')):
+
+                        tgt = str(ip_header.src_address)
+                        if tgt != self.host and tgt not in hosts_up:
+                            hosts_up.add(tgt)
+                            logging.info(f'Host Up: {tgt}')
+                            print(f'Host Up: {tgt}')
 
         except KeyboardInterrupt:
+            logging.warning('User interrupted the scan.')
             if os.name == 'nt':
                 self.socket.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)
-            logging.warning('User interrupted the scan.')
 
+        self._print_results(subnet, hosts_up)
+        sys.exit()
+
+    def _print_results(self, subnet, hosts_up):
+        """Вывод результатов сканирования"""
         if hosts_up:
             logging.info(f'\n\nSummary: Hosts up on {subnet}')
             print(f'\n\nSummary: Hosts up on {subnet}')
             for host in sorted(hosts_up):
-                logging.info(f'{host}')
-                print(f'{host}')
+                logging.info(host)
+                print(host)
         else:
             logging.info('No hosts found.')
         print('')
-        sys.exit()
 
-#пасит аргументы строки, настраивает логирование, создает сканер, запускает udp рассылку
+
 if __name__ == '__main__':
     args = parse_arguments()
     logger = setup_logging(args.log)
     logging.info(f'Starting scanner on host {args.host} for subnet {args.subnet}')
 
-    s = Scanner(args.host)
+    scanner = Scanner(args.host)
     time.sleep(1)
-    t = threading.Thread(target=udp_sender, args=(args.subnet,))
-    t.start()
-    s.sniff(args.subnet)
+
+    sender_thread = threading.Thread(target=udp_sender, args=(args.subnet,))
+    sender_thread.start()
+
+    scanner.sniff(args.subnet)
