@@ -5,14 +5,13 @@ import aiohttp
 async def main():
     sites = [
         "https://www.yandex.ru",
-        "https://bmstu.ru",
+        "https://bmstu.ru"
     ] * 800
+
     start_time = time.perf_counter()
     await download_all_sites(sites)
     duration = time.perf_counter() - start_time
-    print(f"Dowload {len(sites)} sites in {duration} seconds")
-
-
+    print(f"Downloaded {len(sites)} sites in {duration} seconds")
 
 async def download_all_sites(sites):
     async with aiohttp.ClientSession() as session:
