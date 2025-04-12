@@ -1,10 +1,10 @@
-import threading
+#многопоточность
+import threading # для работы с потоками
 import time
-from concurrent.futures import ThreadPoolExecutor
-
+from concurrent.futures import ThreadPoolExecutor #пул потоков для параллельного выполнения задач
 import requests
 
-thread_local = threading.local()
+thread_local = threading.local() #хранилище данных кажого потокаё
 
 
 def main():
@@ -18,15 +18,16 @@ def main():
     print(f"Download {len(sites)} sites in {duration} seconds")
 
 def download_all_sites(sites):
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        executor.map(download_site, sites)
+    with ThreadPoolExecutor(max_workers=5) as executor: #создает пул из 5 потоков
+        executor.map(download_site, sites) #каждый поток поллуч свою часть url
 
 
 def download_site(url):
-    session = get_session_for_thread()
+    session = get_session_for_thread() #получение сессия для текущего потока
     with session.get(url) as responce:
         print(f"Read {len(responce.content)} bytes from {url}")
 
+#создает уникальтную версию для каждого потока
 def get_session_for_thread():
     if not hasattr(thread_local, "session"):
         thread_local.session = requests.Session()
