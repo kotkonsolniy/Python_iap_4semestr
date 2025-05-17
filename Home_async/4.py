@@ -23,13 +23,6 @@ async def main():
 #     # Запуск всех задач параллельно
 #     await asyncio.gather(task1(), task2(), task3())
 
-# async def main():
-#     t1 = asyncio.create_task(task1())
-#     t2 = asyncio.create_task(task2())
-#     t3 = asyncio.create_task(task3())
-#     await t1  # Можно ждать выборочно
-#     await t2
-#     await t3
 
 # Запуск всех задач
 asyncio.run(main())

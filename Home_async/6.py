@@ -1,24 +1,25 @@
+#на доделать
 import asyncio
-import aiohttp
+import aioping
 
 sites = [
-    'https://www.google.com',
-    'https://www.github.com',
-    'https://www.python.org',
-    'https://www.kali.org',
+    'google.com',
+    'github.com',
+    'python.org',
+    'kali.org',
 ]
 
-async def ping_site(session, url):
+async def ping_site(host):
     try:
-        async with session.get(url, timeout=5) as response:
-            print(f'{url} -> {response.status}')
+        delay = await aioping.ping(host, timeout=2)  # отправляет icmp запрос ожидая 2 сек
+        print(f"{host} -> Ping OK: {delay * 1000:.2f} ms") #возвращает время задержки
+    except TimeoutError:
+        print(f"{host} -> Ping Timeout")  #если нет ответа
     except Exception as e:
-        print(f'{url} -> Error: {e}')
-
+        print(f"{host} -> Error: {e}") #другие ошибки
 
 async def main():
-    async with aiohttp.ClientSession() as session:
-        tasks = [ping_site(session, url) for url in sites]
-        await asyncio.gather(*tasks) #запуск задач одновременно
+    tasks = [ping_site(site) for site in sites]
+    await asyncio.gather(*tasks) #параллельное выполнение
 
 asyncio.run(main())
