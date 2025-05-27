@@ -15,7 +15,7 @@ async def write_file(file, resp):
 async def get_url(url):
     async with aiohttp.ClientSession() as session: #создаем сессию
         async with session.get(url) as resp: #отправляем гет запрос
-            if resp.status == 200: #если ответ успешный
+            if resp.status == 200: #если ответ ус```пешный
                 filename = url.split('/')[-1] #имя файла -- последняя часть юрла
                 await write_file(file=filename, resp=resp) #запись в файл
             else:
