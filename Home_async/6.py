@@ -9,6 +9,7 @@ sites = [
     'kali.org',
 ]
 
+#проверка на доступность хоста
 async def ping_site(host):
     try:
         delay = await aioping.ping(host, timeout=2)  # отправляет icmp запрос ожидая 2 сек

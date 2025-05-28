@@ -4,7 +4,7 @@ import aiofiles
 
 CHUNK_SIZE = 8192  # размер буфера (8 КБ) кусочки
 
-#запись файла по чанкам
+#запись файла по кусочкам
 async def write_file(file, resp):
     async with aiofiles.open(file, mode='wb') as f: #открываем файл
         async for chunk in resp.content.iter_chunked(CHUNK_SIZE): #читаем ответ по кусочкам
@@ -15,7 +15,7 @@ async def write_file(file, resp):
 async def get_url(url):
     async with aiohttp.ClientSession() as session: #создаем сессию
         async with session.get(url) as resp: #отправляем гет запрос
-            if resp.status == 200: #если ответ ус```пешный
+            if resp.status == 200: #если ответ успешный
                 filename = url.split('/')[-1] #имя файла -- последняя часть юрла
                 await write_file(file=filename, resp=resp) #запись в файл
             else:

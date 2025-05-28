@@ -6,7 +6,7 @@ async def timer():
         while True:
             print("хоба на...") #каждую секунду выводит
             await asyncio.sleep(1)
-    except asyncio.CancelledError:
+    except asyncio.CancelledError: #
         print("Таймер остановлен")
 
 async def main():
