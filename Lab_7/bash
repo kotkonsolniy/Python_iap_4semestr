@@ -1,0 +1,6 @@
+#!/bin/bash
+
+python3 process.py asunc.py
+python3 ne_multi_potok.py
+python3 multi_potok.py
+

@@ -1,14 +1,14 @@
-import ipaddress
+import ipaddress  #работа с айпи адресами
 import sys
-import socket
+import socket #работа с сетевыми соединенями
 import os
-import struct
+import struct #распаковка бинарных заголовков ip/icmp
 import threading
 import time
-from utils import setup_logging, parse_arguments
 import logging
+from utils import setup_logging, parse_arguments
 
-# Волшебная строка, которую мы будем искать в ICMP ответах
+# Волшебная строка, которую мы будем искать в ICMP ответах(константа)
 MESSAGE = 'BMSTU'
 
 #разбираем ip заголовк пакета,  распаковывает бинарные адреса
@@ -55,9 +55,12 @@ class ICMP:
 def udp_sender(subnet):
     logging.info(f'Starting UDP sender for subnet {subnet}')
     try:
+        #сздаем udp-сокет
         sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # разрешаем широковещательную рассылку
         sender.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1) #разрешение широковещательной рассылки
 
+        #перебираем все айпи адреса подсети
         for ip in ipaddress.ip_network(subnet).hosts():
             try:
                 sender.sendto(bytes(MESSAGE, 'utf8'), (str(ip), 64212))
@@ -66,10 +69,12 @@ def udp_sender(subnet):
                 #отсуствие задержки могло вызывать переполнение буффера
                 #ошибки не прерываются а только логируются
             except Exception as e:
+                #если отправка не удалась
                 logging.warning(f"Failed to send to {ip}: {e}")
                 continue
 
     except Exception as e:
+        #ошибка при создании сокетаили другая критическая ошибка
         logging.error(f"UDP sender error: {e}")
     finally:
         sender.close()
@@ -95,7 +100,7 @@ class Scanner:
 
 #захватывает сырые пакет, разюивает ip заголовки, добавляет хост в список в случае выполнения всех условий
     def sniff(self, subnet):
-        hosts_up = set()
+        hosts_up = set() #множество для хранения активных хостов
         try:
             while True:
                 raw_buffer = self.socket.recvfrom(65535)[0]
@@ -126,7 +131,7 @@ class Scanner:
                 print(f'{host}')
         else:
             logging.info('No hosts found.')
-        print('')
+
         sys.exit()
 
 #пасит аргументы строки, настраивает логирование, создает сканер, запускает udp рассылку

@@ -4,7 +4,7 @@ import struct
 
 class IP(Structure):
     _fields_ = [
-        ("type", c_ubyte, 8),
+        ("type", c_ubyte, 4),
         ("code", c_ubyte, 8),
         ("sum", c_ushort, 16),
         ("id", c_ushort, 16),

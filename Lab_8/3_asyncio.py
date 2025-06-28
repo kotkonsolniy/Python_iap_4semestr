@@ -13,7 +13,6 @@ async def main():
     print(f"Dowload {len(sites)} sites in {duration} seconds")
 
 
-
 async def download_all_sites(sites):
     async with aiohttp.ClientSession() as session:
         tasks = [download_site(url, session) for url in sites]

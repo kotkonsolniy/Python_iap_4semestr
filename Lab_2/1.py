@@ -2,7 +2,7 @@ import socket
 import os
 
 # Узел для прослушивания
-HOST = '192.168.37.176'  # Берем активный адрес
+HOST = '192.168.0.103'  # Берем активный адрес
 
 def main():
     # Создаем сырой сокет и привязываем к общедоступному интерфейсу
@@ -20,10 +20,6 @@ def main():
 
     # Читаем один пакет
     print(sniffer.recvfrom(65565))
-
-    # Если мы в Windows, выключаем неизбирательный режим
-    if os.name == 'nt':
-        sniffer.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)
 
 if __name__ == '__main__':
     main()

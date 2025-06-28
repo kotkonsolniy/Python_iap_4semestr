@@ -68,7 +68,6 @@ def sniff(host):
                     )
                 )
 
-
     except KeyboardInterrupt:
         #если мы в винде вкыключаем неизбираетльныцй пежим
         if os.name == 'nt':
@@ -79,7 +78,7 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         host = sys.argv[1]
     else:
-        host = '192.168.170.176'
+        host = '192.168.0.104'
     sniff(host)
 
 

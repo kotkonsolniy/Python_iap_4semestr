@@ -19,7 +19,7 @@ class IP:
 
         # ip адресса, понятные человек
         self.scr.address = ipaddress.ip_address(self.scr)
-        self.dst_address = ipaddress.ip_address(self.scr)
+        self.dst_address = ipaddress.ip_address(self.dst)
 
         #сопоставляем константы протокола с их гназваниями
         self.protocol_map = {1: "ICMP", 6: "TCP", 17: "UDP"}

@@ -1,6 +1,6 @@
 import socket
 
-target_host = '45.9.74.137'
+target_host = '127.0.0.1'
 # target_host = 'sp-sys.ru
 target_port = 13377
 # target_port = 80
